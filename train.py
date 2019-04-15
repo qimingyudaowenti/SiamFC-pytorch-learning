@@ -23,6 +23,7 @@ def resume_train():
         tar_name = 'epoch_{}_step_{}_.tar'.format(newest_epoch, newest_step)
 
         checkpoint = torch.load(resume_path + tar_name)
+
         print('load newest train checkpoint:', tar_name)
 
         return checkpoint
@@ -49,7 +50,7 @@ def save_weights(epoch, step, state_dict):
 
 
 # batch per GPU
-batch_size = 16
+batch_size = 8
 
 # used in dataloader
 workers_num = 8

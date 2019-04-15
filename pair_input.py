@@ -38,23 +38,24 @@ class InputPair(Dataset):
         self.videos = imdb['videos']
         self.indices = np.random.permutation(self.videos_num)
 
-        # answer: https://github.com/bilylee/SiamFC-TensorFlow/issues/69
+        # https://github.com/bilylee/SiamFC-TensorFlow/issues/69
+        safe_size = self.config['instance_sz'] - \
+                    int(self.config['instance_sz'] * self.config['max_stretch_scale'])
+        perturbation_size = safe_size - 8  # size for center perturbation
+
         self.transform_z = Compose([
-            RandomStretch(max_stretch=0.05),
-            # CenterCrop(self.config['instance_sz'] - 8),
-            # RandomCrop(self.config['instance_sz'] - 2 * 8),
-            CenterCrop(self.config['instance_sz']),
-            RandomCrop(self.config['instance_sz'] - 8),
+            RandomStretch(max_stretch=self.config['max_stretch_scale']),
+            # after RandomStretch, the size may smaller than 255, make sure CenterCrop area in it.
+            CenterCrop(safe_size),
+            RandomCrop(perturbation_size),
             CenterCrop(self.config['exemplar_sz']),
             ToTensor()])
 
         # input x do not have to be 255*255*3
         self.transform_x = Compose([
-            RandomStretch(max_stretch=0.05),
-            # CenterCrop(self.config['instance_sz'] - 8),
-            # RandomCrop(self.config['instance_sz'] - 2 * 8),
-            CenterCrop(self.config['instance_sz'] - 12),
-            RandomCrop(self.config['instance_sz'] - 12 - 8),
+            RandomStretch(max_stretch=self.config['max_stretch_scale']),
+            CenterCrop(safe_size),
+            RandomCrop(perturbation_size),
             ToTensor()])
 
     def __len__(self):
@@ -69,7 +70,7 @@ class InputPair(Dataset):
         instance_image = Image.open(img_files[rand_x])
 
         exemplar_image = 255.0 * self.transform_z(exemplar_image)  # torch.Size: [3, 127, 127]
-        instance_image = 255.0 * self.transform_x(instance_image)  # torch.Size: [3, 235, 235] not [3, 255, 255]
+        instance_image = 255.0 * self.transform_x(instance_image)  # torch.Size: smaller than [3, 255, 255]
 
         return exemplar_image, instance_image
 
@@ -102,10 +103,12 @@ class InputPair(Dataset):
             'max_dist': 100,
             'exemplar_sz': 127,
             'instance_sz': 255,
-            'context': 0.5
+            'context': 0.5,
+            'max_stretch_scale': 0.05,
         }
 
         return config
+
 
 if __name__ == '__main__':
     input_data = InputPair('data')
@@ -116,6 +119,9 @@ if __name__ == '__main__':
             img = img.numpy().astype(np.uint8)
             img = np.transpose(img, (1, 2, 0))
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+            center = (int(img.shape[1] / 2), int(img.shape[0] / 2))  # (x, y)
+            cv2.circle(img, center, 2, (0, 0, 255), -1)
 
             cv2.imshow("OpenCV", img)
             cv2.waitKey()

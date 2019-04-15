@@ -32,7 +32,7 @@ def choose_video(sequence_num):
     elif sequence_num == 2:
         data_path = '/home/ubuntu/Downloads/dataset/VOT/vot2016/road'
         data_type = 'VOT'
-        bbox = [442.7,336.8,484.39,337.1,484.14,370.51,442.46,370.21]
+        bbox = [439.75,351.48,475.95,334.84,490.17,365.79,453.97,382.43]
     elif sequence_num == 3:
         data_path = '/home/ubuntu/Downloads/dataset/VOT/vot2016/octopus'  # bad
         data_type = 'VOT'
@@ -78,82 +78,87 @@ def choose_video(sequence_num):
         data_path = '/home/ubuntu/Downloads/dataset/VOT/vot2016/gymnastics4'
         bbox = [422.52, 214.84, 472.26, 206.17, 490.56, 311.21, 440.83, 319.88]
     elif 14 == sequence_num:
-        data_type = 'VOT'
-        data_path = '/home/ubuntu/Downloads/dataset/VOT/vot2017/frisbee'
-        bbox = [419.77, 460.75, 459.49, 490.17, 416.37, 548.38, 376.65, 518.96]
-
+        data_type = 'TPS2C'
+        data_path = '/home/ubuntu/Downloads/dataset/ThreePastShop2cor/cut'
+        bbox = [188, 134, 246, 284]  # like MOT data. format: x1, y1, x2, y2
+    elif 15 == sequence_num:  # large box problem
+        data_type = 'TPS2C'
+        data_path = '/home/ubuntu/Downloads/dataset/ThreePastShop2cor/cut'
+        bbox = [245, 127, 298, 272]  # like MOT data. format: x1, y1, x2, y2
 
     if data_type == 'VOT': # VOT data. format: x0, y0, x1, y1, x2, y2, x3, y3
-        # change to [c_y, c_x, h, w]
+        left_top_x = min([bbox[i] for i in range(0, 8, 2)])
+        left_top_y = min([bbox[i] for i in range(1, 8, 2)])
+        right_bottom_x = max([bbox[i] for i in range(0, 8, 2)])
+        right_bottom_y = max([bbox[i] for i in range(1, 8, 2)])
 
-        init_bbox = [0] * 4
-        init_bbox[0] = (bbox[3] + bbox[7]) / 2
-        init_bbox[1] = (bbox[0] + bbox[4]) / 2
-        init_bbox[2] = abs(bbox[7] - bbox[3])
-        init_bbox[3] = abs(bbox[4] - bbox[0])
+        # change to [top-left_x, top-left_y, w, h]
+        init_bbox = [0.0] * 4
+        init_bbox[0] = left_top_x
+        init_bbox[1] = left_top_y
+        init_bbox[2] = right_bottom_x - left_top_x
+        init_bbox[3] = right_bottom_y - left_top_y
+    elif data_type == 'TPS2C':
+        init_bbox = [bbox[0],
+                     bbox[1],
+                     bbox[2] - bbox[0],
+                     bbox[3] - bbox[1]]
 
-        picture_type = 'jpg'
-
-        # files = os.listdir(data_path)
-        # frames = [i for i in files if i.split('.')[-1] == picture_type]
-        # frames.sort(key=lambda n: int(n.split('.')[0]))
-        # frames_path = [os.path.join(data_path, p) for p in frames]
-
-        frames_path = sorted(glob.glob(os.path.join(data_path, '*.jpg')))
+    frames_path = sorted(glob.glob(os.path.join(data_path, '*.jpg')))
 
     return frames_path, init_bbox
 
 
-def read_frame_RGB(frame_path):
-    BGR_img = cv2.imread(frame_path)
-    RGB_img = cv2.cvtColor(BGR_img, cv2.COLOR_BGR2RGB)
+def read_frame_rgb(frame_path):
+    rgb_img = cv2.imread(frame_path)
+    rgb_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2RGB)
 
-    return RGB_img
-
-
-def center_box_2_corner_box(box):
-    # [c_y, c_x, h, w] to [x1, y1, x2, y2]
-
-    c_y, c_x, h, w = box
-    new_box = [c_x - w / 2,
-               c_y - h / 2,
-               c_x + w / 2,
-               c_y + h / 2]
-
-    return new_box
+    return rgb_img
 
 
-def show_tracking(frame, center_box):
-    corner_box = center_box_2_corner_box(center_box)
+def show_tracking(frame, center_box, is_first=False):
+    # [left_top_x, left_top_y, w, h] to [x1, y1, x2, y2]
+    corner_box = [center_box[0],
+                  center_box[1],
+                  center_box[0] + center_box[2],
+                  center_box[1] + center_box[3]]
+
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
     cv2.rectangle(frame,
-            (int(corner_box[0]), int(corner_box[1])),
-            (int(corner_box[2]), int(corner_box[3])),
-            [0,0,255], 2)
+                  (int(corner_box[0]), int(corner_box[1])),
+                  (int(corner_box[2]), int(corner_box[3])),
+                  [0, 0, 255], 2)
 
     cv2.imshow('tracking', frame)
 
-    k = cv2.waitKey(30) & 0xff
-    if k == 27:
-        raise Exception('Stop')
+    if is_first:
+        cv2.waitKey(0)
+    else:
+        k = cv2.waitKey(10) & 0xff
+        if k == 27:
+            raise Exception('Stop')
 
 
 # the image format should be 'RGB'
 if __name__ == '__main__':
-    weights_path = newest_weights_path()
+    # weights_path = newest_weights_path()
+    weights_path = 'saved/test_model_weights/epoch_0_step_0_.pth'
     tracker = TrackerSiamFC(load_path=weights_path, mode='test')
 
-    frames_path, init_box = choose_video(1)
+    # init_box format: [left_top_x, left_top_y, w, h]
+    frames_path, init_box = choose_video(15)
 
     for i, frame_path in enumerate(frames_path):
 
         if i == 0:
-            first_frame = read_frame_RGB(frame_path)
+            first_frame = read_frame_rgb(frame_path)
             tracker.init_first_frame(first_frame, init_box)
+            show_tracking(first_frame, init_box, is_first=True)
         else:
-            frame = read_frame_RGB(frame_path)
-            predicted_box = tracker.predict_box_one_img(frame)  # center based box
+            frame = read_frame_rgb(frame_path)
+            predicted_box = tracker.predict_box_one_img(frame)  # [left_top_x, left_top_y, w, h]
+
             show_tracking(frame, predicted_box)
 
     # you can also use 'track_in_imgs' method in class TrackerSiamFC.

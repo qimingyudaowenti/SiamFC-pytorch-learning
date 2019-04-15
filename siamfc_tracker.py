@@ -146,8 +146,9 @@ class TrackerSiamFC(object):
             if load_path is not None:
                 # self.model.load_state_dict(torch.load(load_path,
                 #                                       map_location=lambda storage, loc: storage))
-                self.model.load_state_dict(torch.load(load_path,
-                                                      map_location="cuda:0"))
+                state_dict = torch.load(load_path, map_location="cuda:0")
+
+                self.model.load_state_dict(state_dict)
 
                 print('Loading weights from', load_path, 'success!')
             else:
@@ -156,14 +157,14 @@ class TrackerSiamFC(object):
             self.model.eval()
 
         else:
-            raise Exception('Confirm TrackerSiamfFC mode!')
+            raise Exception('Select TrackerSiamfFC mode! (train / test)')
 
     @staticmethod
     def setup_config():
         config = {
             # ----------train-----------
             # used in training
-            'initial_lr': 0.001,
+            'initial_lr': 0.01,
             'lr_decay': 0.8685113737513527,  # https://github.com/bilylee/SiamFC-TensorFlow/issues/50
             'weight_decay': 5e-4,
             'momentum': 0.9,
@@ -239,8 +240,7 @@ class TrackerSiamFC(object):
         """
         def make_patch(image, center, crop_size, out_size, pad_color):
             corners = np.concatenate((np.round(center - (crop_size - 1) / 2),
-                                      np.round(center - (crop_size - 1) / 2) + crop_size))
-            corners = np.round(corners).astype(int)
+                                      np.round(center - (crop_size - 1) / 2) + crop_size)).astype(int)
 
             # image shape: (h, w, c)
             pads = np.concatenate((-corners[:2], corners[2:] - image.shape[:2]))
@@ -319,13 +319,21 @@ class TrackerSiamFC(object):
         return loss.item()
 
     def init_first_frame(self, first_frame, box):
+        # the input box should be [top_left_x, top_left_y, w, h]
+
         if self.__mode != 'test':
             raise Exception('Tracker is not in test mode! Confirm TrackerSiamfFC config!')
 
         image = np.asarray(first_frame)
 
+        # [top_left_x, top_left_y, w, h] to [c_y, c_x, h, w]
+        box = np.array([
+            box[1] - 1 + (box[3] - 1) / 2,
+            box[0] - 1 + (box[2] - 1) / 2,
+            box[3], box[2]], dtype=np.float32)
+
         # box should be [c_y, c_x, h, w]
-        self.prvs_bbox = np.array(box, dtype=np.float32)
+        self.prvs_bbox = box
 
         exemplar_image = self._crop_resize(image, box, target='z')
 
@@ -405,8 +413,13 @@ class TrackerSiamFC(object):
 
         self.prvs_bbox[2:] *= update_scale
 
-        # center based box [c_y, c_x, h, w]
-        return self.prvs_bbox  # predict box in present frame
+        # [c_y, c_x, h, w] to [top_left_x, top_left_y, w, h]
+        box = np.array([
+            self.prvs_bbox[1] + 1 - (self.prvs_bbox[3] - 1) / 2,
+            self.prvs_bbox[0] + 1 - (self.prvs_bbox[2] - 1) / 2,
+            self.prvs_bbox[3], self.prvs_bbox[2]])
+
+        return box  # predict box in present frame
 
     def track_in_imgs(self, img_files, box):
         # box should be [c_y, c_x, h, w]

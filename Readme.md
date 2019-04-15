@@ -9,7 +9,7 @@ This repository is helpful to learn SiamFC. For doing more research on SiamFC, f
 
 ## Why combine them?
 
-Aiming at learning SiamFC, I search for a simple and clean python implementation of it until I find [huanglianghua/siamfc-pytorch](https://github.com/bilylee/SiamFC-TensorFlow). In huanglianghua's code, [GOT-10k toolkit](https://github.com/got-10k/toolkit) (the excellent tracking toolkit) is used. For some reason, I handle prepared local data instead of using GOT-10k interface. The data is processed by bilylee's code.
+Aiming at learning SiamFC, I search for a light-weighted python implementation of it until I find [huanglianghua/siamfc-pytorch](https://github.com/bilylee/SiamFC-TensorFlow). In huanglianghua's code, [GOT-10k toolkit](https://github.com/got-10k/toolkit) (the excellent tracking toolkit) is used. For some reason, I need to handle prepared local data instead of using GOT-10k interface. The data is processed by bilylee's code.
 
 ## requirements
 
@@ -25,6 +25,8 @@ Aiming at learning SiamFC, I search for a simple and clean python implementation
 2. run training script:
 
    ```
+   mkdir -p saved/test_model_weights saved/training_resume_state
+
    python train.py
    ```
 
@@ -44,6 +46,5 @@ cd SiamFC-pytorch-learning
 python test.py
 ```
 
-## TODO
-
-add web link 
+## Learn more about SiamFC
+[SiamFC 分析](http://geyao1995.com/SiamFC/)
