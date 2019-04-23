@@ -40,8 +40,8 @@ class InputPair(Dataset):
 
         # https://github.com/bilylee/SiamFC-TensorFlow/issues/69
         safe_size = self.config['instance_sz'] - \
-                    int(self.config['instance_sz'] * self.config['max_stretch_scale'])
-        perturbation_size = safe_size - 8  # size for center perturbation
+                    int(self.config['instance_sz'] * self.config['max_stretch_scale'])  # 243
+        perturbation_size = safe_size - 8  # size for center perturbation, 235
 
         self.transform_z = Compose([
             RandomStretch(max_stretch=self.config['max_stretch_scale']),
