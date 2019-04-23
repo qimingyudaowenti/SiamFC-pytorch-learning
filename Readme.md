@@ -3,7 +3,7 @@
 This repository is the combination of two implementations of [SiamFC](https://www.robots.ox.ac.uk/~luca/siamese-fc.html) tracker:
 
 - [bilylee/SiamFC-TensorFlow](https://github.com/bilylee/SiamFC-TensorFlow)
-- [huanglianghua/siamfc-pytorch](https://github.com/bilylee/SiamFC-TensorFlow)
+- [huanglianghua/siamfc-pytorch](https://github.com/huanglianghua/siamfc-pytorch)
 
 This repository is helpful to learn SiamFC. For doing more research on SiamFC, fork repositories above.
 
