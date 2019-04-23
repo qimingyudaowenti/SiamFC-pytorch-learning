@@ -80,10 +80,8 @@ class TrackerSiamFC(object):
 
         if torch.cuda.is_available():
             self.device = torch.device('cuda:0')
-            print('GPU found!')
         else:
             self.device = torch.device('cpu')
-            print('GPU not found!')
 
         model = SiamFC()
 
