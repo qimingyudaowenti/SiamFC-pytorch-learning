@@ -5,7 +5,7 @@ This repository is the combination of two implementations of [SiamFC](https://ww
 - [bilylee/SiamFC-TensorFlow](https://github.com/bilylee/SiamFC-TensorFlow)
 - [huanglianghua/siamfc-pytorch](https://github.com/bilylee/SiamFC-TensorFlow)
 
-This repository is helpful to learn SiamFC. For doing more research on SiamFC, forking repositories above.
+This repository is helpful to learn SiamFC. For doing more research on SiamFC, fork repositories above.
 
 ## Why combine them?
 
@@ -13,8 +13,9 @@ Aiming at learning SiamFC, I search for a light-weighted python implementation o
 
 ## requirements
 
-- pytorch
-- opencv-python
+- python 3
+- pytorch 1.0
+- opencv-python 3
 
 ## Train
 
