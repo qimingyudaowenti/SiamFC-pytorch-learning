@@ -57,9 +57,8 @@ class SiamFC(nn.Module):
         :return responses_maps: each size is 1*17*17
         """
 
-        exemplar_z = self.feature_extract(exemplar_image)  # n*128*6*6
-        candidate_x = self.feature_extract(candidate_image)  # n*128*22*22
-
+        exemplar_z = self.feature_extract(exemplar_image)  # n*256*6*6
+        candidate_x = self.feature_extract(candidate_image)  # n*256*22*22
 
         n, c, h, w = candidate_x.size()
         candidate_x = candidate_x.view(1, n*c, h, w)
